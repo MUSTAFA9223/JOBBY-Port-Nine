@@ -43,6 +43,28 @@ for(let i=0;i<8;i++){box(17+i*5,.28+i*.62,20.7,5,.5,4,metal)}
 // Floodlight masts and additional rooftop connections.
 for(const [x,z] of [[-62,-34],[80,-29],[80,49],[-55,53]]){box(x,8,z,.45,16,.45,metal);box(x,16.2,z,4,.4,1,concrete)}
 for(let i=0;i<6;i++)box(-33+i*11,5.25,28,10,.25,1.8,metal);
+// PORT NINE environmental details: rooftop railings, container doors, vents,
+// dock bollards, mooring posts, cargo pallets and floodlight housings.
+const trim=new THREE.MeshLambertMaterial({color:0x404b52}),yellow=new THREE.MeshLambertMaterial({color:0xd9a33b}),glass=new THREE.MeshLambertMaterial({color:0x91b8c6});
+function decor(x,y,z,w,h,d,mat){return box(x,y,z,w,h,d,mat,false)}
+for(let i=0;i<18;i++){const x=-54+i*7.4;decor(x,.08,-61,.8,.16,1.6,yellow);decor(x,.32,-59,.32,.64,.32,trim)}
+for(const x of [-60,-49,72,83]){decor(x,2.2,-47,.5,1.2,.5,trim);decor(x,2.9,-47,1.5,.3,1.5,yellow)}
+for(const [x,z] of [[-62,-34],[80,-29],[80,49],[-55,53]]){decor(x,16.7,z,4,.7,1.4,yellow);decor(x,16.7,z-1,3,.4,.25,glass)}
+for(let i=0;i<16;i++){const x=-45+i*7;decor(x,.15,55,3,.3,.4,yellow)}
+// Guard rails mark elevated catwalks without creating extra collision walls.
+for(const z of [11.05,12.95,27.05,28.95])for(let i=0;i<12;i++){const x=-40+i*9;decor(x,5.9,z,.09,1.25,.09,metal);decor(x+4.5,6.5,z,9,.09,.09,metal)}
+// Loading ramp and rooftop connections to the hand-built reserved footprints.
+for(let i=0;i<8;i++){decor(20+i*5,1.5+i*.6,20.7,4.6,.14,3.5,yellow)}
+// Exterior warehouse vents and doors.
+for(const z of [-23,-8,7,22]){decor(-69.3,3,z,.2,5,4,trim);decor(-69.45,5.7,z,.24,.8,3.6,glass)}
+for(let i=0;i<7;i++){decor(-99+i*4.7,8.8,-1,2,.35,2,trim)}
+// Vessel deck details and railings.
+for(let i=0;i<12;i++){const x=-11+i*4.4;decor(x,4.1,-70.5,.12,1.8,.12,yellow);decor(x,4.1,-81.5,.12,1.8,.12,yellow)}
+decor(14,4.9,-70.5,53,.12,.12,metal);decor(14,4.9,-81.5,53,.12,.12,metal);
+for(const x of [-1,8,17,26]){decor(x,4.2,-76,5,.6,3,mats[2]);decor(x,4.6,-76,5,.12,3,metal)}
+// Warehouse skylights and lane markers.
+for(let i=0;i<6;i++)decor(-95+i*4,8.62,-1,1.4,.12,47,glass);
+for(let i=0;i<10;i++)decor(-47+i*11,.03,61,5,.06,.13,yellow);
 // Floor access walkway across the containers.
 for(let i=0;i<9;i++)box(-35+i*11,5.25,12,10,.25,1.8,metal);
 const player=new THREE.Vector3(0,1.8,68);let vy=0,grounded=true,yaw=0,pitch=.15;const radius=.52,height=1.8;
