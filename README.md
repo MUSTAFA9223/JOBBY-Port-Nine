@@ -1,23 +1,21 @@
-# JOBBY Port Nine — Cargo Yard Map
+# JOBBY Port Nine — Mobile Cargo Yard
 
-Standalone repository for extracting and adapting the **PORT NINE** cargo-container map into JOBBY WORLD.
+## Status
 
-## Current contents
+- `src/arenas/a03_cargoyard.js`: **unaltered original** PORT NINE map generator, licensed MIT. It requires the upstream game's `ctx` runtime and is not runnable alone.
+- `index.html`: **independent lightweight Three.js prototype** of the cargo yard, **reconstructed from the source map's layout coordinates**, not a faithful full conversion of the 95 KB generator. Includes container maze, warehouse, ship, two cranes, walkways, simple collisions, touch joystick, jump, touch camera and keyboard controls.
+- `LICENSE`: original copyright and MIT notice.
 
-- `src/arenas/a03_cargoyard.js` — complete original map-generation source (cargo-container maze, crane, ship, warehouse, ramps and walkways).
-- `LICENSE` — original MIT license and copyright notice.
+## Preview
 
-## Important: integration status
+The single-page prototype can be hosted as a static site. It loads Three.js from `esm.sh`, so an internet connection is needed. GitHub Pages must be enabled in repository Settings → Pages → Deploy from branch → main / root. The GitHub Pages URL, **once enabled and deployed**, should be `https://mustafa9223.github.io/JOBBY-Port-Nine/`.
 
-This is the **original map source**, not a standalone runnable game. Its exported `build(ctx)` function requires the original game's arena context (materials, procedural props, deterministic random, collision proxies and scene helpers). It cannot yet run directly on GitHub Pages or inside JOBBY WORLD.
+## Remaining integration work
 
-## Next steps
+- Run real-device performance tests and correct any movement/collision issues.
+- Convert additional authored objects from original source and optimize draw calls (the current preview creates many meshes).
+- Import adapted geometry into JOBBY WORLD's existing renderer and physics. Keep existing JOBBY avatars, touch input, multiplayer and voice chat.
 
-1. Adapt `build(ctx)` to a small independent Three.js map runtime, retaining map geometry and collision proxies.
-2. Reduce material/texture cost, draw calls and shadows for mobile devices.
-3. Add a map-only preview for mobile testing.
-4. Export or adapt the geometry/collisions to JOBBY WORLD without replacing existing characters, touch controls, multiplayer or voice chat.
+## Original attribution
 
-## Attribution
-
-Port Nine is extracted from [hide-and-seek-arena](https://github.com/twalkerallenii-spec/hide-and-seek-arena), © 2026 twalkerallenii-spec, MIT license. Keep the original copyright and permission notice in redistributed copies.
+Source: https://github.com/twalkerallenii-spec/hide-and-seek-arena © 2026 twalkerallenii-spec, MIT license. Preserve the original license notice.
