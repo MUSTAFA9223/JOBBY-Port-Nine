@@ -1,0 +1,42 @@
+name: Import original PORT NINE and deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/original-port-nine.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  import-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download full original open-source game
+        run: |
+          git clone --depth 1 https://github.com/twalkerallenii-spec/hide-and-seek-arena.git /tmp/port-nine-original
+          mkdir -p original
+          cp -a /tmp/port-nine-original/. original/
+          rm -rf original/.git original/node_modules
+          cp original/LICENSE original/LICENSE-original.txt
+          printf '%s\n' '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PORT NINE ORIGINAL</title><script>location.replace("./original/index.html")</script><a href="./original/index.html">PLAY ORIGINAL PORT NINE</a>' > index.html
+      - name: Commit complete original game files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add original index.html
+          if ! git diff --cached --quiet; then git commit -m "Import full original MIT licensed game for faithful Port Nine test"; git push; fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
