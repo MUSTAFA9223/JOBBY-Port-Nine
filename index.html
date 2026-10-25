@@ -7,7 +7,7 @@
 import * as THREE from 'https://esm.sh/three@0.170.0';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ab3ca);scene.fog=new THREE.Fog(0x8ab3ca,105,235);
 const camera=new THREE.PerspectiveCamera(67,innerWidth/innerHeight,.1,450);
-const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.prepend(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.15));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.prepend(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xf5e5c7,0x576a72,2));const sun=new THREE.DirectionalLight(0xffd6a0,2);sun.position.set(-70,100,-65);scene.add(sun);
 const mats=[0xa8402e,0x8c3527,0x2f5f86,0x24486b,0x2e6b4a,0x7d6a2e,0xb06a24,0xc0562c,0x8d8a84,0xd6ccb6].map(color=>new THREE.MeshLambertMaterial({color}));
 const metal=new THREE.MeshLambertMaterial({color:0x697986}),concrete=new THREE.MeshLambertMaterial({color:0x929b9b}),dark=new THREE.MeshLambertMaterial({color:0x364651}),sea=new THREE.MeshLambertMaterial({color:0x26768d});
@@ -21,7 +21,7 @@ const reserved=[[-47,-26,-5.4,3.8],[16,63,16.2,24.9],[-16,-.5,-11.9,-5.8],[50,74
 function reservedSpace(x,z){return reserved.some(([x0,x1,z0,z1])=>x+3.03>x0&&x-3.03<x1&&z+1.22>z0&&z-1.22<z1)}
 let seed=90311;function rand(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296}
 let count=0;
-for(let b=0;b<bands.length;b++){const [z0,rows]=bands[b];for(let r=0;r<rows;r++){for(let i=0;i<17;i++){if(reservedSpace(x,z)||rand()<.18||((b===3||b===5)&&i>8&&i<11))continue;const x=-43+i*7.1,z=z0+r*2.7;const height=rand()<.38?2:rand()<.17?3:1;for(let level=0;level<height;level++){box(x,1.295+2.59*level,z,6.06,2.59,2.44,mats[Math.floor(rand()*mats.length)]);count++}}}}
+for(let b=0;b<bands.length;b++){const [z0,rows]=bands[b];for(let r=0;r<rows;r++){for(let i=0;i<17;i++){const x=-43+i*7.1,z=z0+r*2.7;if(reservedSpace(x,z)||rand()<.18||((b===3||b===5)&&i>8&&i<11))continue;const height=rand()<.38?2:rand()<.17?3:1;for(let level=0;level<height;level++){box(x,1.295+2.59*level,z,6.06,2.59,2.44,mats[Math.floor(rand()*mats.length)]);count++}}}}
 // Warehouse, dockside, gates and raised landmarks.
 // Source-map reserved areas remain accessible for hiding, pursuit and future team modes.
 box(-85,4,-1,31,8,58,dark);box(-85,8.25,-1,33,.6,60,metal);
@@ -45,7 +45,7 @@ for(const [x,z] of [[-62,-34],[80,-29],[80,49],[-55,53]]){box(x,8,z,.45,16,.45,m
 for(let i=0;i<6;i++)box(-33+i*11,5.25,28,10,.25,1.8,metal);
 // Floor access walkway across the containers.
 for(let i=0;i<9;i++)box(-35+i*11,5.25,12,10,.25,1.8,metal);
-const player=new THREE.Vector3(0,1.8,68);let vy=0,grounded=false,yaw=0,pitch=.15;const radius=.52,height=1.8;
+const player=new THREE.Vector3(0,1.8,68);let vy=0,grounded=true,yaw=0,pitch=.15;const radius=.52,height=1.8;
 function floorY(x,z,foot){let y=0;for(const t of tops){if(Math.abs(x-t.x)<t.w/2-radius*.3&&Math.abs(z-t.z)<t.d/2-radius*.3&&t.y<=foot+.25&&t.y>y)y=t.y}return y}
 function blocked(x,z,feet){for(const o of obstacles){if(Math.abs(x-o.x)<o.w/2+radius&&Math.abs(z-o.z)<o.d/2+radius&&feet<o.y+o.h/2-.1&&feet+height>o.y-o.h/2+.1)return true}return false}
 const keys=new Set();addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space')jump()});addEventListener('keyup',e=>keys.delete(e.code));
@@ -53,13 +53,13 @@ let ax=0,az=0;const joy=document.querySelector('#joy'),stick=document.querySelec
 function joyMove(e){const r=joy.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),l=Math.max(1,Math.hypot(dx,dy)),m=Math.min(1,l/47);ax=dx/l*m;az=-dy/l*m;stick.style.transform=`translate(${ax*42}px,${-az*42}px)`}
 joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);joyMove(e)});joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});function joyStop(e){if(e.pointerId!==joyId)return;joyId=null;ax=az=0;stick.style.transform=''}joy.addEventListener('pointerup',joyStop);joy.addEventListener('pointercancel',joyStop);
 function jump(){if(grounded){vy=9.8;grounded=false}}document.querySelector('#jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
-document.querySelector('#reset').onclick=()=>{player.set(0,1.8,68);vy=0};
+document.querySelector('#reset').onclick=()=>{player.set(0,1.8,68);vy=0;grounded=true};
 let lookId=null,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.36)return;lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(lookId)});renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;yaw-=(e.clientX-lastX)*.005;pitch=Math.max(-.55,Math.min(.75,pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY});renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerId===lookId)lookId=null});renderer.domElement.addEventListener('pointercancel',e=>{if(e.pointerId===lookId)lookId=null});addEventListener('blur',()=>{keys.clear();ax=az=0;joyId=lookId=null;stick.style.transform=''});
 const clock=new THREE.Clock();let frames=0,elapsed=0;
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.033);const forward=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0)+az,side=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+ax;const len=Math.max(1,Math.hypot(forward,side)),s=7.2*dt;const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side)/len*s,dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side)/len*s;const foot=player.y-height;
-if(!blocked(player.x+dx,player.z,foot))player.x+=dx;if(!blocked(player.x,player.z+dz,foot))player.z+=dz;player.x=THREE.MathUtils.clamp(player.x,-102,102);player.z=THREE.MathUtils.clamp(player.z,-61,82);
-vy-=23*dt;let nextFoot=foot+vy*dt;const floor=floorY(player.x,player.z,Math.max(foot,nextFoot));if(nextFoot<=floor&&vy<=0){nextFoot=floor;vy=0;grounded=true}else grounded=false;player.y=nextFoot+height;
-if(player.y < -15){player.set(0,1.8,68);vy=0}camera.position.set(player.x,player.y+.2,player.z);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=-pitch;renderer.render(scene,camera);
+const step=0.42;const tryX=player.x+dx,tryZ=player.z+dz;if(!blocked(tryX,player.z,foot))player.x=tryX;else if(grounded&&!blocked(tryX,player.z,foot+step)){player.x=tryX;player.y+=step}if(!blocked(player.x,tryZ,player.y-height))player.z=tryZ;else if(grounded&&!blocked(player.x,tryZ,player.y-height+step)){player.z=tryZ;player.y+=step}player.x=THREE.MathUtils.clamp(player.x,-102,102);player.z=THREE.MathUtils.clamp(player.z,-61,82);
+vy-=23*dt;let nextFoot=foot+vy*dt;const floor=floorY(player.x,player.z,Math.max(player.y-height,nextFoot));if(nextFoot<=floor&&vy<=0){nextFoot=floor;vy=0;grounded=true}else grounded=false;player.y=nextFoot+height;
+if(player.y < -15){player.set(0,1.8,68);vy=0;grounded=true}camera.position.set(player.x,player.y+.2,player.z);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=-pitch;renderer.render(scene,camera);
 frames++;elapsed+=dt;if(elapsed>1.5){document.querySelector('#stats').textContent=`${count} containers · ${objects} meshes · ${Math.round(frames/elapsed)} FPS`;frames=0;elapsed=0}}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});tick();
 </script></body></html>
