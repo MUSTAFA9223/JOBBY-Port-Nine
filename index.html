@@ -3,8 +3,19 @@
 <style>
 *{box-sizing:border-box}html,body{margin:0;overflow:hidden;background:#9fb9c8;font-family:system-ui;color:#fff;touch-action:none}canvas{display:block}#hud{position:absolute;top:12px;left:12px;background:#071827b8;padding:10px 14px;border-radius:12px;font-size:12px;pointer-events:none}#hud b{font-size:16px}#joy{position:absolute;bottom:28px;left:25px;width:132px;height:132px;border-radius:50%;border:2px solid #ffffff75;background:#ffffff20;touch-action:none}#stick{position:absolute;left:40px;top:40px;width:48px;height:48px;background:#ffffffa8;border-radius:50%;box-shadow:0 0 10px #0004}#jump{position:absolute;bottom:57px;right:25px;width:80px;height:80px;border-radius:50%;border:2px solid #fff9;background:#1b709ed9;color:white;font-weight:800;font-size:16px;touch-action:none}#reset{position:absolute;top:14px;right:14px;border:1px solid #fff9;border-radius:8px;padding:9px 13px;background:#10293ab8;color:white}#hint{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);font-size:11px;background:#10293aa9;padding:5px 9px;border-radius:8px;white-space:nowrap}@media(min-width:800px){#joy,#jump{opacity:.65}}
 </style></head><body><div id="hud"><b>JOBBY · PORT NINE</b><div>Mobile map prototype · cargo yard</div><div id="stats">Loading map...</div></div><button id="reset">RESPAWN</button><div id="joy"><div id="stick"></div></div><button id="jump">JUMP</button><div id="hint">Drag right side to look · Left joystick to move</div>
+<div id="bootstatus" role="status" style="position:fixed;z-index:1000;inset:0;background:#142b38;color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;font:16px system-ui;text-align:center;padding:24px"><b>JOBBY PORT NINE</b><span id="bootmessage">Starting lightweight mobile map...</span><button id="retryboot" style="display:none;padding:12px 20px;border:0;border-radius:10px;background:#2b92b4;color:white;font-weight:bold" onclick="location.reload()">RETRY</button></div>
+<script>
+window.addEventListener('error',e=>{const m=document.getElementById('bootmessage');if(m)m.textContent='Could not start map: '+(e.message||'unknown error');const b=document.getElementById('retryboot');if(b)b.style.display='block'});
+window.addEventListener('unhandledrejection',e=>{const m=document.getElementById('bootmessage');if(m)m.textContent='Loading failed. Check connection and retry.';const b=document.getElementById('retryboot');if(b)b.style.display='block'});
+</script>
 <script type="module">
-import * as THREE from 'https://esm.sh/three@0.170.0';
+const boot=document.getElementById('bootmessage');
+let THREE;
+for(const url of ['https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js','https://unpkg.com/three@0.170.0/build/three.module.js','https://esm.sh/three@0.170.0']) {
+  try { boot.textContent='Loading 3D engine...'; THREE=await Promise.race([import(url),new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),9000))]);break; }catch(err){console.warn('Engine source unavailable',url,err);}
+}
+if(!THREE){boot.textContent='3D engine could not load. Try a different connection or retry.';document.getElementById('retryboot').style.display='block';throw new Error('All 3D engine sources failed')}
+boot.textContent='Building cargo yard...';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ab3ca);scene.fog=new THREE.Fog(0x8ab3ca,105,235);
 const camera=new THREE.PerspectiveCamera(67,innerWidth/innerHeight,.1,450);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.15));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.prepend(renderer.domElement);
@@ -83,5 +94,5 @@ const step=0.42;const tryX=player.x+dx,tryZ=player.z+dz;if(!blocked(tryX,player.
 vy-=23*dt;let nextFoot=player.y-height+vy*dt;const floor=floorY(player.x,player.z,Math.max(player.y-height,nextFoot));if(nextFoot<=floor&&vy<=0){nextFoot=floor;vy=0;grounded=true}else grounded=false;player.y=nextFoot+height;
 if(player.y < -15){player.set(0,1.8,68);vy=0;grounded=true}camera.position.set(player.x,player.y+.2,player.z);camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=-pitch;renderer.render(scene,camera);
 frames++;elapsed+=dt;if(elapsed>1.5){document.querySelector('#stats').textContent=`${count} containers · ${objects} meshes · ${Math.round(frames/elapsed)} FPS`;frames=0;elapsed=0}}
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});tick();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});tick();document.getElementById('bootstatus').remove();
 </script></body></html>
