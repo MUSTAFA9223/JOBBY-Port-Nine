@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/original-port-nine.yml'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 permissions:
   contents: write
