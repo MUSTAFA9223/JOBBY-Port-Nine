@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.log
+shots/
+tools/validate-*.txt
+tools/last-smoke.json
+package-lock.json
+/assetwork/
+
+# never commit credentials
+*.env
+.env*
+/assetwork/
