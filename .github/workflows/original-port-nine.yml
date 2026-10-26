@@ -56,6 +56,7 @@ jobs:
           test -s dist/maps-viewer.js
           mkdir -p site
           cp index.html site/
+          cp index.html site/play-v7.html
           cp -a dist original jobby-characters site/
       - name: Browser smoke test (mobile WebGL + character)
         run: node tests/mobile-smoke.cjs
