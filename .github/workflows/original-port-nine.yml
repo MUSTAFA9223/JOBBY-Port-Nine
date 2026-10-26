@@ -8,6 +8,7 @@ on:
       - 'original/**'
       - 'jobby-characters/**'
       - '.github/workflows/original-port-nine.yml'
+      - 'tests/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,6 +38,8 @@ jobs:
           test -f original/src/arenas/a08_palisade.js
           test -f jobby-characters/Casual_Male.glb
           cp original/src/engine/assets.js /tmp/jobby-original-assets.js
+          cp original/src/engine/textures.js /tmp/jobby-original-textures.js
+          sed -i 's/const size = opts.size ?? 256;/const size = Math.min(opts.size ?? 256, 128);/' original/src/engine/textures.js
           sed -i "s@../../assets/@../original/assets/@g" original/src/engine/assets.js
           ./node_modules/.bin/esbuild maps-viewer.js \
             --bundle \
@@ -48,6 +51,7 @@ jobs:
             --alias:three=./original/vendor/three/build/three.module.js \
             --alias:three/addons=./original/vendor/three/examples/jsm
           cp /tmp/jobby-original-assets.js original/src/engine/assets.js
+          cp /tmp/jobby-original-textures.js original/src/engine/textures.js
           node --check dist/maps-viewer.js
           test -s dist/maps-viewer.js
           mkdir -p site
@@ -60,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jobby-map-mobile-preview
-          path: /tmp/jobby-maps-mobile-smoke.png
+          path: /tmp/jobby-maps-mobile-*.png
           if-no-files-found: ignore
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
