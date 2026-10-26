@@ -36,8 +36,16 @@ const server=http.createServer((req,res)=>{
    },null,{timeout:90000});
    const status=await page.locator('#status').textContent();
    const err=await page.locator('#errorText').textContent();
-   await page.screenshot({path:'/tmp/jobby-maps-mobile-smoke.png'});
-   console.log(JSON.stringify({status,err,errors,menus:result,screenshot:'/tmp/jobby-maps-mobile-smoke.png'}));
+   await page.screenshot({path:'/tmp/jobby-maps-mobile-backrooms.png'});
+   const firstStatus=status;
+   await page.selectOption('#arena','palisade');
+   await page.waitForFunction(()=>document.querySelector('#status')?.textContent?.startsWith('Building'),null,{timeout:10000});
+   await page.waitForFunction(()=>{const state=document.querySelector('#status')?.textContent||'';return state.startsWith('Ready')||state.startsWith('ERROR')||!document.querySelector('#error').hidden;},null,{timeout:90000});
+   const secondStatus=await page.locator('#status').textContent();
+   await page.screenshot({path:'/tmp/jobby-maps-mobile-palisade.png'});
+   if(!secondStatus.startsWith('Ready'))throw new Error('Second 3D map failed: '+secondStatus);
+   console.log('VISUAL TESTS:',JSON.stringify({backrooms:firstStatus,palisade:secondStatus}));
+   console.log(JSON.stringify({status,err,errors,menus:result,screenshots:['/tmp/jobby-maps-mobile-backrooms.png','/tmp/jobby-maps-mobile-palisade.png']}));
    if(!status.startsWith('Ready'))throw new Error('3D startup failed: '+status+' / '+err);
    if(errors.length)throw new Error('Browser console errors: '+errors.join(' | '));
  }finally{if(browser)await browser.close();server.close();}
