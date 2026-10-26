@@ -1,53 +1,61 @@
-name: Import original PORT NINE and deploy
+name: Build and deploy JOBBY Maps (mobile)
 on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/original-port-nine.yml'
-      - '.github/workflows/pages.yml'
       - 'index.html'
       - 'maps-viewer.js'
-      - 'characters.json'
+      - 'original/**'
+      - 'jobby-characters/**'
+      - '.github/workflows/original-port-nine.yml'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
-  import-and-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download full original open-source game
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser-compatible bundler
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.25.12
+      - name: Build self-hosted mobile entrypoint
         run: |
-          git clone --depth 1 https://github.com/twalkerallenii-spec/hide-and-seek-arena.git /tmp/port-nine-original
-          mkdir -p original
-          cp -a /tmp/port-nine-original/. original/
-          rm -rf original/.git original/node_modules
-          cp original/LICENSE original/LICENSE-original.txt
-      - name: Import JOBBY character models
-        run: |
-          git clone --depth 1 --filter=blob:none --sparse https://github.com/MUSTAFA9223/jobby-site.git /tmp/jobby-source
-          cd /tmp/jobby-source
-          git sparse-checkout set public/world/models
-          cd -
-          mkdir -p jobby-characters
-          cp /tmp/jobby-source/public/world/models/*.glb jobby-characters/
-      - name: Commit complete original game files
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add original jobby-characters
-          if ! git diff --cached --quiet; then git commit -m "Import full original MIT licensed game for faithful Port Nine test"; git push; fi
+          set -e
+          test -f original/vendor/three/build/three.module.js
+          test -f original/src/arenas/a08_palisade.js
+          test -f jobby-characters/Casual_Male.glb
+          cp original/src/engine/assets.js /tmp/jobby-original-assets.js
+          sed -i "s@../../assets/@../original/assets/@g" original/src/engine/assets.js
+          ./node_modules/.bin/esbuild maps-viewer.js \
+            --bundle \
+            --splitting \
+            --format=esm \
+            --target=es2020 \
+            --minify \
+            --outdir=dist \
+            --alias:three=./original/vendor/three/build/three.module.js \
+            --alias:three/addons=./original/vendor/three/examples/jsm
+          cp /tmp/jobby-original-assets.js original/src/engine/assets.js
+          node --check dist/maps-viewer.js
+          test -s dist/maps-viewer.js
+          mkdir -p site
+          cp index.html site/
+          cp -a dist original jobby-characters site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: site
       - id: deployment
         uses: actions/deploy-pages@v4
