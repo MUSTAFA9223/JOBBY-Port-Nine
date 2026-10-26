@@ -1,1 +1,56 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>JOBBY MAPS — Original Arenas</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1320;color:white;font:14px system-ui}canvas{display:block;width:100%;height:100%;touch-action:none}#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px;border-radius:12px;background:#0a1428dd}select{background:#233451;color:white;padding:9px;border:1px solid #6983a5;border-radius:8px;max-width:90vw}#status{font-size:11px;opacity:.8}#stick{position:fixed;bottom:28px;left:22px;width:126px;height:126px;border-radius:50%;background:#18314aa8;border:2px solid #9cbbd6;touch-action:none;display:grid;place-items:center}#knob{width:55px;height:55px;border-radius:50%;background:#d2e8ffbd;border:2px solid white;pointer-events:none}#tip{position:fixed;bottom:34px;right:12px;text-align:right;pointer-events:none;background:#0a1428a0;padding:7px;border-radius:7px;max-width:45vw;font-size:12px}</style><script type="importmap">{"imports":{"three":"./original/vendor/three/build/three.module.js","three/addons/":"./original/vendor/three/examples/jsm/"}}</script></head><body><canvas id="gl"></canvas><div id="hud"><strong>JOBBY MAPS</strong><select id="arena" aria-label="Choose original map"></select><select id="character" aria-label="Choose JOBBY character"></select><span id="status">Loading original maps…</span></div><div id="stick" aria-label="Move joystick"><div id="knob"></div></div><div id="tip">Left joystick: move<br>Drag screen: look around</div><script type="module" src="./maps-viewer.js?v=3"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#08111f">
+<title>JOBBY MAPS — Playable Arenas</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08111f;color:white;font:14px system-ui,-apple-system,sans-serif}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;z-index:5;top:calc(env(safe-area-inset-top) + 9px);left:9px;right:9px;background:#0b1931ed;border:1px solid #3b5570;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#brand{font-size:14px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
+select{background:#233653;color:#fff;padding:10px 24px 10px 9px;border:1px solid #647c9c;border-radius:9px;max-width:calc(50vw - 17px);min-width:110px;font-size:14px}
+#status{width:100%;font-size:12px;line-height:1.4;color:#cedef4}
+#stick{position:absolute;z-index:7;bottom:calc(22px + env(safe-area-inset-bottom));left:16px;width:122px;height:122px;border-radius:50%;border:2px solid #86abc8;background:#243c5388;display:grid;place-items:center;touch-action:none}
+#knob{width:57px;height:57px;border-radius:50%;background:#9db8d5ec;border:2px solid white;pointer-events:none}
+#jump{position:absolute;z-index:7;right:22px;bottom:calc(39px + env(safe-area-inset-bottom));width:77px;height:77px;border:2px solid #9abde3;border-radius:50%;background:#2b5065cd;color:white;font-weight:800;touch-action:none}
+#tip{position:absolute;right:12px;bottom:calc(129px + env(safe-area-inset-bottom));text-align:right;font-size:11px;padding:6px;border-radius:7px;background:#0b1931b0;pointer-events:none}
+#error{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 137px);left:10px;right:10px;padding:13px;border:1px solid #e19a75;border-radius:10px;background:#221e26eF;font-size:13px;line-height:1.4}
+#error[hidden],#preview[hidden]{display:none}
+#errorText{overflow-wrap:anywhere;color:#f3c3b5;margin:7px 0}
+#error button{border:0;border-radius:7px;background:#fff;color:#142137;padding:9px;font-weight:700}
+#preview{position:absolute;z-index:1;inset:120px 0 0;display:grid;place-items:center;pointer-events:none;opacity:.5}
+#preview img{width:min(70vw,340px);height:auto;max-height:40vh;object-fit:contain;border-radius:9px}
+#preview p{text-align:center;color:#b9cde3}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="preview"><div><img id="previewImage" src="./original/assets/art/card-08-palisade.png" alt="Original game's map artwork"><p>Loading original 3D arena…</p></div></div>
+<div id="hud">
+ <strong id="brand">JOBBY MAPS</strong>
+ <select id="arena" aria-label="Select map"><option>Loading maps…</option></select>
+ <select id="character" aria-label="Select JOBBY character"><option>Loading characters…</option></select>
+ <div id="status" role="status">Starting map viewer…</div>
+</div>
+<div id="stick" aria-label="Move joystick"><div id="knob"></div></div>
+<button id="jump" type="button" aria-label="Jump">JUMP</button>
+<div id="tip">Drag screen to look around<br>Left stick to move</div>
+<div id="error" hidden><strong>Could not start 3D world</strong><div id="errorText"></div><button onclick="location.reload()">Retry</button><p style="margin-bottom:0">If it stays black, try opening this link in Google Chrome.</p></div>
+<script>
+(function(){
+ var map=document.getElementById('arena'),character=document.getElementById('character');
+ map.innerHTML='';character.innerHTML='';
+ var arenas=[['backrooms','THE BACKROOMS','01-backrooms'],['neonmetro','NEON METRO','02-neonmetro'],['cargoyard','PORT NINE','03-cargoyard'],['undercroft','THE UNDERCROFT','04-undercroft'],['aqueducts','THE AQUEDUCTS','05-aqueducts'],['frostwatch','FROSTWATCH','06-frostwatch'],['orbital','HALO NINE','07-orbital'],['palisade','PALISADE MALL','08-palisade'],['forge','THE FORGE','09-forge'],['abbadon','ABBADON MANOR','10-abbadon'],['bazaar','DUST BAZAAR','11-bazaar'],['static','THE STATIC','12-static']];
+ arenas.forEach(function(a){var o=document.createElement('option');o.value=a[0];o.textContent=a[1];map.add(o);});
+ map.value=arenas.some(function(a){return a[0]===location.hash.slice(1)})?location.hash.slice(1):'palisade';
+ map.addEventListener('change',function(){var item=arenas.find(function(a){return a[0]===map.value});if(item)document.getElementById('previewImage').src='./original/assets/art/card-'+item[2]+'.png';});
+ window.addEventListener('error',function(e){var b=document.getElementById('error');b.hidden=false;document.getElementById('errorText').textContent=e.message||'Failed to load application script';});
+ window.addEventListener('unhandledrejection',function(e){var b=document.getElementById('error');b.hidden=false;document.getElementById('errorText').textContent=String(e.reason||'Module failed');});
+})();
+</script>
+<script type="module" src="./dist/maps-viewer.js?v=4"></script>
+</body>
+</html>
