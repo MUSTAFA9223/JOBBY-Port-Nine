@@ -1,24 +1,22 @@
-name: Deploy Port Nine to GitHub Pages
+name: Deploy lightweight JOBBY MAPS
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
   pages: write
   id-token: write
-concurrency:
-  group: pages
-  cancel-in-progress: true
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    environment: github-pages
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare light site
+        run: mkdir -p site && cp index.html site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          path: site
+      - uses: actions/deploy-pages@v4
