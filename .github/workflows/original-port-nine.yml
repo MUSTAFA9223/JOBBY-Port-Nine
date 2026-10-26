@@ -38,7 +38,7 @@ jobs:
           git sparse-checkout set public/world/models
           cd -
           mkdir -p jobby-characters
-          find /tmp/jobby-source/public/world/models -maxdepth 1 -name '*.glb' -exec cp {} jobby-characters/ \\;
+          cp /tmp/jobby-source/public/world/models/*.glb jobby-characters/
       - name: Commit complete original game files
         run: |
           git config user.name "github-actions[bot]"
