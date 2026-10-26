@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install browser-compatible bundler
-        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.25.12
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.25.12 playwright-core@1.56.1
       - name: Build self-hosted mobile entrypoint
         run: |
           set -e
@@ -53,6 +53,15 @@ jobs:
           mkdir -p site
           cp index.html site/
           cp -a dist original jobby-characters site/
+      - name: Browser smoke test (mobile WebGL + character)
+        run: node tests/mobile-smoke.cjs
+      - name: Save real in-game test screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobby-map-mobile-preview
+          path: /tmp/jobby-maps-mobile-smoke.png
+          if-no-files-found: ignore
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
