@@ -9,6 +9,8 @@ const errorText = document.getElementById('errorText');
 const stick = document.getElementById('stick');
 const knob = document.getElementById('knob');
 const jump = document.getElementById('jump');
+const preview=document.getElementById('preview');
+arenaPicker.replaceChildren();characterPicker.replaceChildren();
 const maps = [
  ['backrooms','THE BACKROOMS'],['neonmetro','NEON METRO'],
  ['cargoyard','PORT NINE'],['undercroft','THE UNDERCROFT'],
@@ -36,6 +38,7 @@ function showError(message) {
  setStatus('ERROR — '+text.slice(0,90));
  errorText.textContent=text;
  alertBox.hidden=false;
+ preview.hidden=false;
 }
 window.addEventListener('error',e=>showError(e.error||e.message||'Script error'));
 window.addEventListener('unhandledrejection',e=>showError(e.reason||'Module failed to load'));
@@ -119,7 +122,7 @@ async function openMap(id) {
  if(!world)return;
  const ticket=++requestId;
  if(loading){setStatus('Finish loading current map first');return;}
- loading=true;alertBox.hidden=true;
+ loading=true;alertBox.hidden=true;preview.hidden=false;
  setStatus('Building '+(maps.find(m=>m[0]===id)?.[1]||id)+'…');
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try {
@@ -129,6 +132,7 @@ async function openMap(id) {
   // Building this source arena may be CPU intensive on older phones.
   await world.load(arena.meta,arena.build,'low');
   mapMeta=arena.meta;
+  preview.hidden=true;
   const spawn=arena.meta.spawn||[0,0,0];
   [x,y,z]=[spawn[0],spawn[1],spawn[2]];
   jumpHeight=0;jumpSpeed=0;
