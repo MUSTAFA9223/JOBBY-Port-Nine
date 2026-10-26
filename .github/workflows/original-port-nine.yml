@@ -7,6 +7,7 @@ on:
       - '.github/workflows/pages.yml'
       - 'index.html'
       - 'maps-viewer.js'
+      - 'characters.json'
   workflow_dispatch:
 permissions:
   contents: write
@@ -30,11 +31,19 @@ jobs:
           cp -a /tmp/port-nine-original/. original/
           rm -rf original/.git original/node_modules
           cp original/LICENSE original/LICENSE-original.txt
+      - name: Import JOBBY character models
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/MUSTAFA9223/jobby-site.git /tmp/jobby-source
+          cd /tmp/jobby-source
+          git sparse-checkout set public/world/models
+          cd -
+          mkdir -p jobby-characters
+          find /tmp/jobby-source/public/world/models -maxdepth 1 -name '*.glb' -exec cp {} jobby-characters/ \\;
       - name: Commit complete original game files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add original
+          git add original jobby-characters
           if ! git diff --cached --quiet; then git commit -m "Import full original MIT licensed game for faithful Port Nine test"; git push; fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
