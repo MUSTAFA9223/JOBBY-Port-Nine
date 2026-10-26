@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/original-port-nine.yml'
       - '.github/workflows/pages.yml'
+      - 'index.html'
+      - 'maps-viewer.js'
   workflow_dispatch:
 permissions:
   contents: write
