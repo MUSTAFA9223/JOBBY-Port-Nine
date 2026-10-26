@@ -44,9 +44,11 @@ window.addEventListener('error',e=>showError(e.error||e.message||'Script error')
 window.addEventListener('unhandledrejection',e=>showError(e.reason||'Module failed to load'));
 let THREE, gl, camera, world, loader, mixer=null, avatar=null, mainModel=null;
 let mapMeta=null, requestId=0, characterRequest=0;
-let yaw=0.2, pitch=0.23, dist=8, moveX=0, moveY=0, joyPointer=null, viewPointer=null;
+let yaw=0.2, pitch=0.12, dist=3.2, moveX=0, moveY=0, joyPointer=null, viewPointer=null;
 let x=0,z=0,y=0,jumpHeight=0,jumpSpeed=0;
-let lastTime=0, started=false, loading=false;
+let lastTime=0, started=false, loading=false, lastCameraCheck=0, safeCameraDistance=3.2;
+let environmentMap=null, persistentLights=null;
+let collidableMeshes=[];
 const keys=new Set();
 window.addEventListener('keydown',e=>{keys.add(e.key.toLowerCase());if(e.key===' '){e.preventDefault();doJump();}});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
@@ -133,6 +135,9 @@ async function openMap(id) {
   await world.load(arena.meta,arena.build,'low');
   mapMeta=arena.meta;
   preview.hidden=true;
+  collidableMeshes=[];
+  world.root.traverse(o=>{if(o.isMesh && o.userData.collide===true && !o.isInstancedMesh)collidableMeshes.push(o);});
+  lastCameraCheck=0;safeCameraDistance=dist;
   const spawn=arena.meta.spawn||[0,0,0];
   [x,y,z]=[spawn[0],spawn[1],spawn[2]];
   jumpHeight=0;jumpSpeed=0;
@@ -167,7 +172,19 @@ function tick(time){
  }
  mixer?.update(dt);
  const lookAt=new THREE.Vector3(x,y+1.4+jumpHeight,z);
- camera.position.set(lookAt.x+Math.sin(yaw)*Math.cos(pitch)*dist,lookAt.y+Math.sin(pitch)*dist+1.3,lookAt.z+Math.cos(yaw)*Math.cos(pitch)*dist);
+ const backward=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch)+.17,-Math.cos(yaw)*Math.cos(pitch)).normalize();
+ if(time-lastCameraCheck>180){
+  lastCameraCheck=time;
+  if(collidableMeshes.length){
+   try{
+    const ray=new THREE.Raycaster(lookAt,backward,0.18,dist);
+    ray.firstHitOnly=true;
+    const hits=ray.intersectObjects(collidableMeshes,false);
+    safeCameraDistance=hits.length?Math.max(.65,hits[0].distance-.25):dist;
+   }catch(e){safeCameraDistance=dist;}
+  }else safeCameraDistance=dist;
+ }
+ camera.position.copy(lookAt).addScaledVector(backward,safeCameraDistance);
  camera.lookAt(lookAt);
  world.update(dt);
  gl.render(world.scene,camera);
@@ -183,18 +200,35 @@ async function boot(){
   import('./original/src/engine/world.js'),
   import('./original/src/engine/textures.js'),
   import('three/addons/loaders/GLTFLoader.js'),
-  import('./original/src/engine/assets.js')
+  import('./original/src/engine/assets.js'),
+  import('three/addons/environments/RoomEnvironment.js')
  ]);
  [THREE]=mods;
- const [{World},{setTextureRenderer},{GLTFLoader},{setAssetRenderer}]=mods.slice(1);
+ const [{World},{setTextureRenderer},{GLTFLoader},{setAssetRenderer},{RoomEnvironment}]=mods.slice(1);
  gl=new THREE.WebGLRenderer({canvas,antialias:false,alpha:false,powerPreference:'low-power'});
- gl.setPixelRatio(Math.min(1,devicePixelRatio||1));gl.setSize(innerWidth,innerHeight,false);
+ gl.setPixelRatio(Math.min(0.85,devicePixelRatio||1));gl.setSize(innerWidth,innerHeight,false);
  gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;
- gl.toneMappingExposure=1.05;gl.shadowMap.enabled=false;
+ gl.toneMappingExposure=1.38;gl.shadowMap.enabled=false;
  camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,1000);
  setTextureRenderer(gl);setAssetRenderer(gl);
- const adapter={roomEnv:null,setGrade(opts){if(typeof opts.exposure==='number')gl.toneMappingExposure=opts.exposure;}};
- world=new World(adapter);loader=new GLTFLoader();
+ let env=null;
+ try{
+  const pmrem=new THREE.PMREMGenerator(gl);
+  pmrem.compileEquirectangularShader();
+  env=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+  environmentMap=env;
+ }catch(e){console.warn('Environment lighting unavailable, using fallback lighting',e);}
+ const adapter={roomEnv:env,setGrade(opts){if(typeof opts.exposure==='number')gl.toneMappingExposure=Math.max(1.1,opts.exposure);}};
+ world=new World(adapter);
+ // Persistent lights remain when a new arena clears only the arena root.
+ const ambient=new THREE.AmbientLight(0xffffff,0.75);
+ const hemi=new THREE.HemisphereLight(0xfff9e9,0x5e6177,1.05);
+ const sun=new THREE.DirectionalLight(0xfff1d6,0.75);
+ sun.position.set(6,11,8);
+ world.scene.add(ambient,hemi,sun);
+ persistentLights={ambient,hemi,sun};
+ loader=new GLTFLoader();
+ canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();started=false;showError('The phone lost its graphics context. Close other apps and press Retry.');});
  started=true;lastTime=performance.now();requestAnimationFrame(tick);
  arenaPicker.addEventListener('change',()=>openMap(arenaPicker.value));
  characterPicker.addEventListener('change',()=>loadCharacter(characterPicker.value));
